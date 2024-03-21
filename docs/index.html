@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>RandX | Docs</title>
+    <link rel="stylesheet" href="../style.css" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css"
+    />
+  </head>
+  <body>
+    <div class="nav-left">
+      <h2>Contents</h2>
+      <br />
+      <a href="#welcome">Welcome</a><br />
+      <a href="#basic">Basic Example</a><br />
+      <span class="indent"></span><a href="#example-explanation">Explanation</a
+      ><br />
+      <br />
+      <a href="#beginner">Beginner Syntax</a><br />
+      <a href="#special">Special Variables</a><br />
+      <a href="#tags">Generator Tags</a><br />
+      <a href="#lists">Lists</a>
+    </div>
+
+    <div class="main">
+      <h1 id="welcome">RandX Alpha | Documentation</h1>
+      <p>
+        Welcome to the RandX documentation! If you've ever needed to create a
+        random generator on the fly, this project is for you.
+      </p>
+      <br />
+      <p style="color: red">
+        This project is still in alpha! Make
+        <a href="mailto:aries.powvalla@gmail.com">suggestions</a> to help us
+        improve.
+      </p>
+      <br />
+      <p>
+        Using this tool does <strong>not</strong> require technical knowledge of
+        any programming language, and can be used in a fairly simple way. It is,
+        however, highly expansive and shouldn't introduce any limitations. If it
+        does, let us know so we can add a feature!
+      </p>
+      <hr />
+
+      <h2 id="basic">Basic Example</h2>
+      <p>
+        Here's a basic example of a random generator. This is a simple generator
+        that will output a random number of a random vehicle.
+      </p>
+
+      <textarea disabled id="d1" placeholder="Rands appear here..."></textarea>
+
+      <h3 id="example-explanation">Detailed Explanation</h3>
+      <p>
+        The first line of the program starts with two forward slashes. This
+        indicates a <strong>comment</strong>. The program will skip over this
+        line, and is just meant to be a note for humans reading your generator.
+      </p>
+      <p>
+        On line 3, we are telling the generator how many results we want to
+        generate. We do this by setting a special value called "_amount" to a
+        number between 1 and 1 billion. Be warned, values greater than 6 million
+        may slow down your device or crash devices like old phones or ipads.
+      </p>
+      <p>
+        On line 5, we start a <strong>list</strong>. When we create a generator,
+        we can pull a random value from lists. In this case, we are pulling a
+        random value from a list of vehicles. All lists must start with the
+        "list" keyword and end with a colon.
+      </p>
+      <p style="color: red">
+        Note: Variables and Lists are case-sensitive. This means that "vehicles"
+        and "Vehicles" are two different lists. Variables and lists can contain
+        letters, numbers, and underscores, but cannot start with an underscore
+        since these are reserved for special variables like "_amount".
+      </p>
+      <p>
+        On line 6, we add our first item to the list: a car. Items in the list
+        are case-sensitive, but the case can also be modified. This will be
+        explained later. On line 7, we add another vehicle, this time a truck,
+        in the same way. Note the dash character used as a bullet point.
+      </p>
+      <p>
+        On line 8, you'll notice the quotes around the vehicle. This is because
+        the vehicle has spaces in its name. We need to use quotes here to tell
+        the generator that "hot" and "balloon" are part of the vehicles name.
+        This will make more sense as we look at the next item in the list.
+      </p>
+      <p>
+        On line 9, we add a spaceship to the list. Note the "%10" after the
+        name. You can use the percent symbol pared with a number to represent
+        the odds this item should have to be picked. In this case, the spaceship
+        has a 10% chance of being picked, and since our list has 4 other items,
+        each other item will split the remaining 90% of the odds. That means
+        there is a 22.5% chance of each other item being picked.
+      </p>
+      <p>
+        On line 10, we add "megatron" to our list. Note that this time, the name
+        has quotes around it, but before each quote is a backslash. If the hot
+        air baloon on line 8 is chosen, the quotes will not appear because they
+        are being used to support spaces in the name. Since there is a backslash
+        before each quote on line 10, the quotes will appear if this item is
+        randomly chosen.
+      </p>
+      <p style="color: red">
+        Note: Quotes come in pairs. If you use a quote without a backslash, you
+        must use another quote without a backslash to close the name. If you use
+        a backslash before a quote, it does not need another quote since a
+        backslash makes the quote be treated like any other letter.
+        <br /><br />
+        Examples:
+        <br />
+        "text" - This is a valid name because the quotes are in pairs.
+        <br />
+        \"text\" - This is a valid name because the backslashes makes the quotes
+        be treated like any other letter.
+        <br />
+        "text\" - This is an invalid name because the first quote does not have
+        a pair.
+        <br />
+        \"text - This is a valid name for the same reason as the second example.
+      </p>
+      <p>The list has now ended.</p>
+      <p>
+        On line 12, we see the keyword "result" followed by a colon. This means
+        that the content on line 13 is what will be generated as a final result.
+      </p>
+      <p>
+        Line 13 starts with the text "I want". This means that for every
+        generation we perform, the text generated will start with "I want". This
+        is known as static text because it never changes. The next thing we see
+        is "[1-6]". This is a quick tool to generate a random number from 1 to
+        6, inclusive. This could also be done by creating a list called
+        "numbers", and adding every number from 1 to 6 to the list. Next, we see
+        "[vehicles]". This will pick a random item from our vehicles list. After
+        the "[vehicles]" tag is the letter s. This makes whatever vehicle was
+        picked plural. Keep in mind that this means if the number we randomly
+        pick from 1 to 6 is 1, the grammar of the sentence will be incorrect
+        (ex: 1 cars). We will show you how to fix this later. Finally, we see
+        more static text, and this completes our result.
+      </p>
+      <p>This generator will produce text like:</p>
+      <p>
+        I want 5 cars please!<br />
+        I want 3 spaceships please!<br />
+        I want 6 hot air balloons please!<br />
+        I want 1 trucks please!<br />
+        I want 2 "megatron"s please!
+      </p>
+      <hr />
+
+      <!-- <h2 id="beginner">Basic Syntax</h2>
+
+      <p>
+        The basic syntax of rscript is simple and relatively similar to standard pseudoscript. It is a line-based
+        language, meaning that each line is a new command and/or serves its own purpose. The language is
+        designed to be easy to read and write, and is pretty lenient with syntax.
+
+      <hr /> -->
+
+      <div id="footer">
+        <br />
+        <p>Created by <a href="https://aries.ninja/">Aries Powvalla</a>.</p>
+      </div>
+    </div>
+
+    <script
+      language="javascript"
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"
+    ></script>
+    <script
+      language="javascript"
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/perl/perl.min.js"
+    ></script>
+    <script src="script.js"></script>
+  </body>
+</html>
+
+<!--<p>
+        A rate limit is in place of 10000 generations per minute. This rate
+        limit can be lifted for free if you are smart or determined enough.
+      </p>
+      <p>
+        To lift the rate limit, send a POST request to
+        ninjam.co/api/v1/terminal/dummy/randx-2. The auth token should be the
+        computed hash of this html file. The user-agent header must be any
+        non-standard Mozilla IX browser token. Send a payload containing the sum
+        of the exact current unix timestamp and the BASE10 encoded value of this
+        paragraph. Send the IP to remove the rate limit for as the user-fallback
+        token.
+      </p>-->

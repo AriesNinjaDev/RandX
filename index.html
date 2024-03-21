@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <title>RandX</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.css">
+  </head>
+  <body>
+    <h1>RandX Alpha</h1>
+    <p>
+      Welcome to RandX! Check out the <a href="./docs">docs</a> or start writing in rscript to
+      create a generator.
+    </p>
+    <hr />  
+    <div id="editor">
+      <textarea id="code" placeholder="Write your rscript here..."></textarea>
+      <div class="button-container" id="options">
+        <button class="button" id="run">Run</button>
+        <button class="button" id="clear">Clear</button>
+        <button class="button" id="export">Export</button>
+      </div> 
+    </div>
+    <div id="output">
+      <hr />
+      <br>
+      <h2>Output</h2>
+      <textarea disabled id="out" placeholder="Rands appear here..."></textarea>
+      <hr />
+    </div>
+    <div id="footer">
+      <br>
+      <p>Created by <a href="https://aries.ninja/">Aries Powvalla</a>.</p>
+    </div>
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
+    <script language="javascript" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/perl/perl.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
