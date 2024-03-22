@@ -1,3 +1,4 @@
+/* global compiler */
 
 class rscript {
     constructor() {

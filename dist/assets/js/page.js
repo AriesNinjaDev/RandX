@@ -1,11 +1,11 @@
-editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
     lineNumbers: true,
     mode: 'text/x-perl',
     matchBrackets: true,
     theme: 'cobalt',
 });
 
-out = CodeMirror.fromTextArea(document.getElementById('out'), {
+const out = CodeMirror.fromTextArea(document.getElementById('out'), {
     lineNumbers: true,
     mode: 'text/x-perl',
     matchBrackets: true,
@@ -14,3 +14,11 @@ out = CodeMirror.fromTextArea(document.getElementById('out'), {
 });
 
 out.getDoc().setValue('None');
+
+const generator = new rscript();
+
+function execute() {
+    let x = editor.getValue();
+    // alert(x);
+    generator.compile(x);
+}

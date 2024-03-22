@@ -25,6 +25,7 @@ class compiler {
 
         let instructions = {};
         let traversingList = false;
+        let resultValue = false;
 
         // Split the raw code into lines
         let lines = raw.split('\n');
@@ -62,6 +63,8 @@ class compiler {
                 let variable = line.split('var ')[1].split(' = ')[0];
                 let value = line.split('var ')[1].split(' = ')[1];
                 instructions[variable] = value;
+            } else {
+                return { error: 'Stray text: Text on this line can\'t be attached to a declaration or statement.', line: index };
             }
         });
 
