@@ -4,8 +4,9 @@ class rscript {
     constructor() {
         this.compiler = new compiler();
     }
-    compile(raw) {
-        let res = this.compiler.compile(raw);
-        return res;
+    execute(raw) {
+        let m_internal = this.compiler.parse(raw);
+        let m_postExec = this.compiler.compile(m_internal);
+        return (m_postExec);
     }
 }

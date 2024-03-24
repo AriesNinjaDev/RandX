@@ -1,3 +1,5 @@
+
+
 const editor = CodeMirror.fromTextArea(document.getElementById("code"), {
     lineNumbers: true,
     mode: "null",
@@ -20,7 +22,7 @@ const generator = new rscript();
 function execute() {
     let x = editor.getValue();
     // alert(x);
-    result = generator.compile(x);
+    const result = generator.execute(x);
     if (!result) {
         out.getDoc().setValue("Compiler finished with no output.");
         document
@@ -28,9 +30,8 @@ function execute() {
             .forEach(function (element) {
                 element.style.color = "blue";
             });
-        return;
+        return false;
     }
-    console.log(result);
     if (result.error) {
         out.getDoc().setValue(`(LINE ${result.line}) ${result.error}`);
         document
@@ -38,7 +39,11 @@ function execute() {
             .forEach(function (element) {
                 element.style.color = "red";
             });
+        return false;
     }
+    // temporary solution
+    console.log(result)
+    out.getDoc().setValue(result.join("\r\n"));
 }
 
 function doClear() {
