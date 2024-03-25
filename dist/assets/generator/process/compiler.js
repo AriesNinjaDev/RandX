@@ -278,15 +278,15 @@ class compiler {
     }
 
     // This function is used to compute the result of a dynamic variable. It is recursive and will continue to call itself until all dynamic variables are resolved. It will return the final result of the dynamic variable.
-    computeResultFromDynamic(accessors, template) {
+    computeDynamic(accessors, template) {
+        console.log(template);
         if (template.ids.length === 0) {
             return template.text;
         }
         let computedIds = [];
         for (const identifier of template.ids) {
             if (this.checkVariable(identifier) === true) {
-
-                computedIds.push(this.computeResultFromDynamic(accessors, accessors[identifier]));
+                computedIds.push(this.computeDynamic(accessors, accessors[identifier]));
             } else {
                 const allowedDynamicChars = ['#', '&', '^', '@', '*'];
                 if (allowedDynamicChars.some(char => { return identifier.includes(char) })) {
@@ -330,8 +330,6 @@ class compiler {
         const instructions = data.instructions
 
         let storage = new Map([]);
-
-        let response = [];
 
         let accessors = {};
 
@@ -380,9 +378,7 @@ class compiler {
 
                 const escapedLine = step.value.replace("%", "\\%")
 
-                if (step.type === 'variable' || step.type === 'result') {
-                    accessors[step.name] = this.tokenize(escapedLine);
-                }
+                accessors[step.name] = this.tokenize(escapedLine);
 
                 for (const tagVar of accessors[step.name].ids) {
                     // Check if the tag variable exists or if it is a special dynamic character.
@@ -394,16 +390,130 @@ class compiler {
                     }
                 }
 
-                result = this.computeResultFromDynamic(accessors, accessors[step.name]);
+                result = this.computeDynamic(accessors, accessors[step.name]);
+
+            } else {
+
+                // Randomly select an element from the list type, and then perform the same operations as the variable type.
+
+                const randomIndex = Math.floor(Math.random() * step.value.length);
+                const randomElement = step.value[randomIndex];
+
+                const brOpenCount = (randomElement.split("[").length - 1) - (randomElement.split("\\[").length - 1);
+                const brCloseCount = (randomElement.split("]").length - 1) - (randomElement.split("\\]").length - 1);
+
+                if (brOpenCount !== brCloseCount) {
+                    return {
+                        error: "Tag Match Error: At least one tag bracket does not have a matching bracket.",
+                        line: step.line,
+                    }
+                }
+
+                let openingCount = 0;
+                let closingCount = 0;
+
+                for (let i = 0; i < step.length; i++) {
+                    if (step.getCharAt(i) === '[' && step.getCharAt(i - 1) !== '\\') {
+                        openingCount++;
+                    } else if (step.getCharAt(i) === ']' && step.getCharAt(i - 1) !== '\\') {
+                        closingCount++;
+                    }
+                    if (openingCount > closingCount + 1) {
+                        return {
+                            error: "Tag Nest Error: Tags cannot be nested inside of dynamic types.",
+                            line: step.line,
+                        };
+                    }
+                }
+
+                if (openingCount !== closingCount) {
+                    return {
+                        error: "Tag Match Error: At least one tag bracket does not have a matching bracket.",
+                        line: step.line,
+                    }
+                }
+
+                tagCount = openingCount;
+
+                const escapedLine = randomElement.replace("%", "\\%")
+
+                accessors[step.name] = this.tokenize(escapedLine);
+
+                for (const tagVar of accessors[step.name].ids) {
+                    // Check if the tag variable exists or if it is a special dynamic character.
+                    if (!storage.has(tagVar) && !['#', '&', '^', '@', '*'].some(char => { return tagVar.includes(char) })) {
+                        return {
+                            error: "Undeclared Variable Error: The variable \"" + tagVar + "\" does not exist.",
+                            line: step.line,
+                        }
+                    }
+                }
+
+                result = this.computeDynamic(accessors, accessors[step.name]);
             }
 
             if (step.type === 'variable') {
-                storage.set(step.name, step.value)
+                storage.set(step.name, step.value);
             } else if (step.type === 'list') {
-                //storage.set(step.name, step.value)
+                storage.set(step.name, step.value);
             } else if (step.type === 'result') {
                 return this.unify(result);
             }
         }
     }
 }
+
+/*
+function chooseRandomWithPercentages(list) {
+    // Filter out strings containing percentages and separate them
+    const percentageStrings = [];
+    const normalStrings = [];
+    list.forEach((element) => {
+        if (element.trim().endsWith('%')) {
+        		const pKeyword = element.trim().substring(0,element.trim().lastIndexOf(" "));
+            if (! Number(pKeyword.replace('%','')) || ! pKeyword.replace('%','') < 100 || pKeyword.replace('%','') > 0) {
+            console.log(pKeyword.replace('%',''));
+            return false;
+            } 
+            percentageStrings.push({
+                value: element.substring(0,element.lastIndexOf(" ")),
+                percentage: parseFloat(pKeyword.replace('%', ''))
+            });
+        } else {
+            normalStrings.push(element);
+        }
+    });
+    
+    console.log(normalStrings);
+    console.log(percentageStrings);
+
+    // Calculate total percentage of normal strings
+    const totalNormalPercentage = normalStrings.length * 100 / list.length;
+    // Adjust the percentage for strings with percentages
+    const adjustedTotalPercentage = totalNormalPercentage + percentageStrings.reduce((acc, curr) => acc + curr.percentage, 0);
+
+    // Generate a random number between 0 and adjustedTotalPercentage
+    const randomNumber = Math.random() * adjustedTotalPercentage;
+
+    // Check if the random number falls within the percentage range of percentage strings
+    if (randomNumber < totalNormalPercentage) {
+        // Choose randomly from normal strings
+        return normalStrings[Math.floor(randomNumber / (totalNormalPercentage / normalStrings.length))];
+    } else {
+        // Subtract totalNormalPercentage from randomNumber to adjust for percentage strings
+        let adjustedRandomNumber = randomNumber - totalNormalPercentage;
+        // Choose randomly from percentage strings
+        for (const percentageString of percentageStrings) {
+            if (adjustedRandomNumber < percentageString.percentage) {
+                return percentageString.value;
+            }
+            adjustedRandomNumber -= percentageString.percentage;
+        }
+    }
+}
+
+// Example usage:
+const stepValues = ["my string 20%", "another string 40%", "normal string 1", "normal string 2"];
+const chosenElement = chooseRandomWithPercentages(stepValues);
+console.log("Chosen Element:", chosenElement);
+*/

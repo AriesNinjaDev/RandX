@@ -11,7 +11,11 @@ class rscript {
             return m_internal;
         }
         for (let i=0; i<m_internal.amount; i++) {
-            m_result.push(this.compiler.compile(m_internal));
+            const m_compiledStep = this.compiler.compile(m_internal);
+            if (m_compiledStep.error) {
+                return m_compiledStep;
+            }
+            m_result.push(m_compiledStep);
         }
         return m_result;
     }
