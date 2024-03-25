@@ -42,7 +42,6 @@ function execute() {
         return false;
     }
     // temporary solution
-    console.log(result)
     out.getDoc().setValue(result.join("\r\n"));
 }
 
@@ -98,7 +97,7 @@ var importData = function (callback) {
     };
 
     input.click();
-};
+}; // // farizaad
 
 function saveScriptWithTimestamp(scriptContent, filenamePrefix) {
     var currentDate = new Date();
@@ -120,12 +119,10 @@ function saveScriptWithTimestamp(scriptContent, filenamePrefix) {
 
 function doExport() {
     saveScriptWithTimestamp(editor.getValue(), "script");
-    alertify.success("Script exported successfully.");
 }
 
 function doImport() {
     importData(function (fileContent) {
         editor.getDoc().setValue(fileContent);
-        alertify.success("Script imported successfully.");
     });
 }

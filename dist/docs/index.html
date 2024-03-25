@@ -110,11 +110,10 @@
             as a bullet point.
         </p>
         <p>
-            On line 8, you'll notice the quotes around the vehicle. This is
-            because the vehicle has spaces in its name. We need to use
-            quotes here to tell the generator that "hot" and "balloon" are
-            part of the vehicle's name. This will make more sense as we look
-            at the next item in the list.
+            On line 8, you'll notice the item has spaces in it. This is allowed! 
+            Keep in mind that extra spaces and the beginning and the end will be 
+            removed. If you want to keep spaces, you can use quotes around the 
+            item. This will be explained later.
         </p>
         <p>
             On line 9, we add a spaceship to the list. Note the "10%" after
@@ -127,32 +126,16 @@
         </p>
         <p>
             On line 10, we add "megatron" to our list. Note that this time,
-            the name has quotes around it, but before each quote is a
-            backslash. If the hot air balloon on line 8 is chosen, the
-            quotes will not appear because they are being used to support
-            spaces in the name. Since there is a backslash before each quote
-            on line 10, the quotes will appear if this item is randomly
-            chosen.
+            there is a backslash before the percent symbol. This is because
+            the percent symbol is a special character in rscript. If you want
+            to use a percent symbol in a name, you must use a backslash before
+            it. This is known as an escape character. Escape characters are
+            used to make special characters be treated like any other letter.
         </p>
         <p style="color: red">
-            Note: Quotes come in pairs. If you use a quote without a
-            backslash, you must use another quote without a backslash to
-            close the name. If you use a backslash before a quote, it does
-            not need another quote since a backslash makes the quote be
-            treated like any other letter.
-            <br /><br />
-            Examples:
-            <br />
-            "text" - This is a valid name because the quotes are in pairs.
-            <br />
-            \"text\" - This is a valid name because the backslashes make the
-            quotes be treated like any other letter.
-            <br />
-            "text\" - This is an invalid name because the first quote does
-            not have a pair.
-            <br />
-            \"text - This is a valid name for the same reason as the second
-            example.
+            Note: This also applies to colons. If you want to use a colon in
+            a name, you must use a backslash before it. This is because colons
+            are used to define variables, lists, and results.
         </p>
         <p>The list has now ended.</p>
         <p>
@@ -167,14 +150,14 @@
             The next thing we see is "[1-6]". This is a quick tool to
             generate a random number from 1 to 6, inclusive. This could also
             be done by creating a list called "numbers", and adding every
-            number from 1 to 6 to the list. Next, we see "[vehicles]". This
-            will pick a random item from our vehicles list. After the
-            "[vehicles]" tag is the letter s. This makes whatever vehicle
-            was picked plural. Keep in mind that this means if the number we
-            randomly pick from 1 to 6 is 1, the grammar of the sentence will
-            be incorrect (ex: 1 cars). We will show you how to fix this
-            later. Finally, we see more static text, and this completes our
-            result.
+            number from 1 to 6 to the list, but this shorthand is much more
+            efficient. Next, we see "[vehicles]". This will pick a random item 
+            from our vehicles list. After the "[vehicles]" tag is the letter 
+            "s". This makes whatever vehicle was picked plural. Keep in mind 
+            that this means if the number we randomly pick from 1 to 6 is 1, 
+            the grammar of the sentence will be incorrect (ex: 1 cars). We will 
+            show you how to fix this later. Finally, we see more static text, 
+            and this completes our result.
         </p>
         <p>This generator will produce text like:</p>
         <p>
@@ -182,7 +165,7 @@
             I want 3 spaceships please!<br />
             I want 6 hot air balloons please!<br />
             I want 1 trucks please!<br />
-            I want 2 "megatron"s please!
+            I want 2 megatron 5%s please!
         </p>
         <hr />
 
@@ -297,7 +280,7 @@
 
     <script language="javascript" type="text/javascript" src="../assets/js/vendor/codemirror.min.js"></script>
     <script language="javascript" type="text/javascript" src="../assets/js/vendor/perl.min.js"></script>
-    <script src="script.js"></script>
+    <script src="codeboxes.js"></script>
 </body>
 
 </html>

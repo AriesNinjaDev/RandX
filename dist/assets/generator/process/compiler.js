@@ -133,7 +133,6 @@ class compiler {
                     this.ciSplit(line, "list ").length != 2 ||
                     this.ciSplit(line, "list ")[0] != "" // we dont trim here to prevent white spaces before the keyword
                 ) {
-                    console.log(this.ciSplit(line, "list "));
                     return { error: "Invalid List Declaration: The list keyword must be the first word on the line.", line: index };
                 }
                 let list = this.ciSplit(line, "list ")[1].split(":")[0].trim();
@@ -165,7 +164,6 @@ class compiler {
                 traversingList = true;
                 existingLists.push(list);
                 instructions.push({ type: "list", name: list, value: [], line: index });
-                console.log(instructions);
             } else if (line.includes("result") && line.includes(":")) {
                 if (traversingList) {
                     traversingList = false;
@@ -191,7 +189,7 @@ class compiler {
                 }
                 resultEntryExpected = true;
                 instructions.push({ type: "result", value: "", line: index + 1 });
-            } else if (line.includes(":")) {
+            } else if (line.match(/[^\\]:/)) { // If the line contains a colon that is not escaped
                 if (traversingList) {
                     traversingList = false;
                 } else if (resultEntryExpected) {
@@ -260,7 +258,7 @@ class compiler {
         if (!instructions.length) {
             return {
                 error: "No Instructions: The script must contain at least one instruction.",
-                line: index-1,
+                line: index - 1,
             };
         }
         if (instructions[instructions.length - 1].type === 'result') {
@@ -273,18 +271,17 @@ class compiler {
 
     // This function is used to compute the result of a dynamic variable. It is recursive and will continue to call itself until all dynamic variables are resolved. It will return the final result of the dynamic variable.
     computeResultFromDynamic(accessors, template) {
-        //console.log(template);
         if (template.ids.length === 0) {
             return template.text;
         }
         let computedIds = [];
         for (const identifier of template.ids) {
             if (this.checkVariable(identifier) === true) {
-                console.log("recurse")
+
                 computedIds.push(this.computeResultFromDynamic(accessors, accessors[identifier]));
             } else {
-                const allowedDynamicChars = ['#','&','^','@','*'];
-                if (allowedDynamicChars.some(char => {return identifier.includes(char)})) {
+                const allowedDynamicChars = ['#', '&', '^', '@', '*'];
+                if (allowedDynamicChars.some(char => { return identifier.includes(char) })) {
                     // Certain dynamic characters are allowed which use special behaviors. # is a random number, & is a random lowercase letter, ^ is a random uppercase letter, @ is a random upper/lowercase letter, * is a random upper/lowercase letter or number.
                     let randomString = '';
                     for (let i of identifier) {
@@ -304,13 +301,14 @@ class compiler {
                 }
             }
         }
-        console.log(template.text);
         for (const id of computedIds) {
-            console.log(computedIds.indexOf(id))
             template.text = template.text.replace('%' + computedIds.indexOf(id), id);
         }
-        console.log(template.text);
         return template.text;
+    }
+
+    unify(str) {
+        return str.replace(/\\(.)/g, '$1');
     }
 
     compile(data) {
@@ -328,6 +326,8 @@ class compiler {
         let response = [];
 
         let accessors = {};
+
+        let result;
 
         for (const step of instructions) {
 
@@ -372,13 +372,13 @@ class compiler {
 
                 const escapedLine = step.value.replace("%", "\\%")
 
-                if (step.type === 'variable') {
+                if (step.type === 'variable' || step.type === 'result') {
                     accessors[step.name] = this.tokenize(escapedLine);
                 }
 
                 for (const tagVar of accessors[step.name].ids) {
                     // Check if the tag variable exists or if it is a special dynamic character.
-                    if (!storage.has(tagVar) && !['#','&','^','@','*'].some(char => {return tagVar.includes(char)})) {
+                    if (!storage.has(tagVar) && !['#', '&', '^', '@', '*'].some(char => { return tagVar.includes(char) })) {
                         return {
                             error: "Undeclared Variable Error: The variable \"" + tagVar + "\" does not exist.",
                             line: step.line,
@@ -386,26 +386,15 @@ class compiler {
                     }
                 }
 
-                const result = this.computeResultFromDynamic(accessors, accessors[step.name]);
+                result = this.computeResultFromDynamic(accessors, accessors[step.name]);
             }
 
             if (step.type === 'variable') {
                 storage.set(step.name, step.value)
-                // const reference = static;
-                // if (step.tagCount > 0) {
-                //     reference = pointer;
-                //     if (step.value.split('-') > 0) {
-                //         reference = rand;
-                //     }
-                // }
-                // accessors[step.name] = { reference,name:step.name,value:step.value }
             } else if (step.type === 'list') {
-                storage.set(step.name, step.value)
+                //storage.set(step.name, step.value)
             } else if (step.type === 'result') {
-                for (let i = 0; i < data.amount; i++) {
-                    response.push(step.value);
-                }
-                return response;
+                return this.unify(result);
             }
         }
     }

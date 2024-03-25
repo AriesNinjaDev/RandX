@@ -20,9 +20,9 @@ _amount: 3
 list vehicles:
 - car
 - truck
-- "hot air balloon"
+- hot air balloon
 - spaceship 10%
-- \\"megatron\\"
+- megatron 5\\%
 
 result:
 I want [1-6] [vehicles]s please!`
@@ -63,18 +63,17 @@ _export = $textBar // display generator results in the text bar. Other options i
 
 code(
     "rt1",
-    `[a-z] // returns a random letter between a and z
-[A-Z] // returns a random letter between A and Z
-[A-Za-z] // returns a random letter between A and Z and a and z
-[0-9] // returns a random number between 0 and 9
-[1-100] // returns a random number between 1 and 100
-
-// The following five can be mixed and matched.
+    `// The following five can be mixed and matched.
 [###] // returns 3 random number between 0 and 9
 [&&&&] // returns 4 random letters between a and z
 [^^^] // returns 3 random letters between A and Z
 [@@@@@] // returns 5 random letters between A and Z and a and z
-[****] // returns 4 random letters between A and Z, a and z, and 0 and 9`
+[****] // returns 4 random letters between A and Z, a and z, and 0 and 9
+
+// There is also a way to generate a random number between two values:
+[5-12] // returns a random number between 5 and 12
+[5-] // returns a random number between 5 and 9 (since 9 is the highest number with the same amount of digits as the number given)
+[-12] // returns a random number between 0 and 12`
 );
 
 code(
