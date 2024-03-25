@@ -257,6 +257,12 @@ class compiler {
             }
             index++;
         }
+        if (!instructions.length) {
+            return {
+                error: "No Instructions: The script must contain at least one instruction.",
+                line: index-1,
+            };
+        }
         if (instructions[instructions.length - 1].type === 'result') {
             return {
                 error: "Invalid Result Declaration: Results must have a value.",
@@ -265,15 +271,46 @@ class compiler {
         }
     }
 
-    computeChecksum(accessors, template) {
+    // This function is used to compute the result of a dynamic variable. It is recursive and will continue to call itself until all dynamic variables are resolved. It will return the final result of the dynamic variable.
+    computeResultFromDynamic(accessors, template) {
+        //console.log(template);
+        if (template.ids.length === 0) {
+            return template.text;
+        }
+        let computedIds = [];
         for (const identifier of template.ids) {
-            if (this.checkVariable(identifier)) {
-                const absolute = computeChecksum;
+            if (this.checkVariable(identifier) === true) {
+                console.log("recurse")
+                computedIds.push(this.computeResultFromDynamic(accessors, accessors[identifier]));
             } else {
-                const allowedDynamicChars = ['-','#','&','^','@','*',':'];
-                if (allowedDynamicChars.some(() => {})) // HERE
+                const allowedDynamicChars = ['#','&','^','@','*'];
+                if (allowedDynamicChars.some(char => {return identifier.includes(char)})) {
+                    // Certain dynamic characters are allowed which use special behaviors. # is a random number, & is a random lowercase letter, ^ is a random uppercase letter, @ is a random upper/lowercase letter, * is a random upper/lowercase letter or number.
+                    let randomString = '';
+                    for (let i of identifier) {
+                        if (i === '#') {
+                            randomString += Math.floor(Math.random() * 10);
+                        } else if (i === '&') {
+                            randomString += String.fromCharCode(Math.floor(Math.random() * 26) + 97);
+                        } else if (i === '^') {
+                            randomString += String.fromCharCode(Math.floor(Math.random() * 26) + 65);
+                        } else if (i === '@') {
+                            randomString += String.fromCharCode(Math.floor(Math.random() * 26) + 65);
+                        } else if (i === '*') {
+                            randomString += String.fromCharCode(Math.floor(Math.random() * 26) + 97);
+                        }
+                    }
+                    computedIds.push(randomString);
+                }
             }
         }
+        console.log(template.text);
+        for (const id of computedIds) {
+            console.log(computedIds.indexOf(id))
+            template.text = template.text.replace('%' + computedIds.indexOf(id), id);
+        }
+        console.log(template.text);
+        return template.text;
     }
 
     compile(data) {
@@ -339,14 +376,17 @@ class compiler {
                     accessors[step.name] = this.tokenize(escapedLine);
                 }
 
-                for (const tagVar of tokenizedStep.ids) {
-                    if (!storage.has(tagVar)) {
+                for (const tagVar of accessors[step.name].ids) {
+                    // Check if the tag variable exists or if it is a special dynamic character.
+                    if (!storage.has(tagVar) && !['#','&','^','@','*'].some(char => {return tagVar.includes(char)})) {
                         return {
                             error: "Undeclared Variable Error: The variable \"" + tagVar + "\" does not exist.",
                             line: step.line,
                         }
                     }
                 }
+
+                const result = this.computeResultFromDynamic(accessors, accessors[step.name]);
             }
 
             if (step.type === 'variable') {
