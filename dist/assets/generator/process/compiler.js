@@ -190,7 +190,9 @@ class compiler {
                 }
                 resultEntryExpected = true;
                 instructions.push({ type: "result", value: "", line: index + 1 });
-            } else if (line.match(/[^\\]:/)) { // If the line contains a colon that is not escaped
+            } else if (line.match(/[^\\]:/) && (! (line.indexOf('[') < line.indexOf(':')))) { // If the line contains a colon that is not escaped
+                // If a "[" is present before the colon,proceed to the next if check
+                console.log(line)
                 if (traversingList) {
                     traversingList = false;
                 } else if (resultEntryExpected) {
@@ -312,9 +314,55 @@ class compiler {
                     }
                     computedIds.push(randomString);
                 } else if (identifier.includes('-')) {
-                    const lowerBound = parseInt(identifier.split('-')[0]);
-                    const upperBound = parseInt(identifier.split('-')[1]);
+                    let lowerBound = parseInt(identifier.split('-')[0]);
+                    let upperBound = parseInt(identifier.split('-')[1]);
+                    // If there is no upper bound, then the upper bound is the highest number with the same amount of digits as the lower bound.
+                    if (isNaN(upperBound)) {
+                        upperBound = Math.pow(10, lowerBound.toString().length) - 1;
+                    }
+                    // If there is no lower bound, then the lower bound is 0.
+                    if (isNaN(lowerBound)) {
+                        lowerBound = 0;
+                    }
                     computedIds.push(Math.floor(Math.random() * (upperBound - lowerBound + 1)) + lowerBound);
+                } else if (identifier.includes(':')) {
+                    // [PLURAL:myVar] // returns s if myVar is not 1
+                    // [UPPER:myVar] // returns the uppercase of myVar
+                    // [LOWER:myVar] // returns the lowercase of myVar
+                    // [CAPS:myVar] // returns the capitalized myVar
+                    // [2:myVar] // returns characters after the 2nd character of myVar
+                    // [1:myVar:3] // returns the 1st to 3rd characters of myVar (inclusive)
+                    let tag = identifier.split(':')[0];
+                    let varName = identifier.split(':')[1];
+                    if (!accessors[varName]) {
+                        return {
+                            error: "Invalid Dynamic Identifier: Dynamic identifiers must be valid variables, special dynamic characters, or random number ranges.",
+                            line: template.line,
+                        }
+                    }
+                    const reference = this.computeDynamic(accessors, accessors[varName]);
+                    let result = '';
+                    if (tag === 'PLURAL') {
+                        result = reference !== 1 ? 's' : '';
+                    } else if (tag === 'UPPER') {
+                        result = reference.toUpperCase();
+                    } else if (tag === 'LOWER') {
+                        result = reference.toLowerCase();
+                    } else if (tag === 'CAPS') {
+                        result = reference.charAt(0).toUpperCase() + reference.slice(1).toLowerCase();
+                    } else if (tag.match(/^[0-9]+$/)) {
+                        result = reference.slice(parseInt(tag));
+                    } else if (tag.match(/^[0-9]+:[0-9]+$/)) {
+                        let start = parseInt(tag.split(':')[0]);
+                        let end = parseInt(tag.split(':')[1]);
+                        result = reference.slice(start, end + 1);
+                    } else {
+                        return {
+                            error: "Invalid Dynamic Identifier: Dynamic identifiers must be valid variables, special dynamic characters, or random number ranges.",
+                            line: template.line,
+                        }
+                    }
+                    computedIds.push(result);
                 } else {
                     return {
                         error: "Invalid Dynamic Identifier: Dynamic identifiers must be valid variables, special dynamic characters, or random number ranges.",
@@ -458,7 +506,7 @@ class compiler {
 
                 for (const tagVar of accessors[step.name].ids) {
                     // Check if the tag variable exists or if it is a special dynamic character.
-                    if (!storage.has(tagVar) && !['#', '&', '^', '@', '*', '-'].some(char => { return tagVar.includes(char) })) {
+                    if (!storage.has(tagVar) && !['#', '&', '^', '@', '*', '-', ':'].some(char => { return tagVar.includes(char) })) {
                         return {
                             error: "Undeclared Variable Error: The variable \"" + tagVar + "\" does not exist.",
                             line: step.line,
@@ -516,7 +564,7 @@ class compiler {
 
                 for (const tagVar of accessors[step.name].ids) {
                     // Check if the tag variable exists or if it is a special dynamic character.
-                    if (!storage.has(tagVar) && !['#', '&', '^', '@', '*'].some(char => { return tagVar.includes(char) })) {
+                    if (!storage.has(tagVar) && !['#', '&', '^', '@', '*', '-', ':'].some(char => { return tagVar.includes(char) })) {
                         return {
                             error: "Undeclared Variable Error: The variable \"" + tagVar + "\" does not exist.",
                             line: step.line,
