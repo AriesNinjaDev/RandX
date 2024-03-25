@@ -269,6 +269,14 @@ class compiler {
         }
     }
 
+    getRandomAny() {
+        let result = '';
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        const charactersLength = characters.length;
+        let counter = 0;
+        return characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+
     // This function is used to compute the result of a dynamic variable. It is recursive and will continue to call itself until all dynamic variables are resolved. It will return the final result of the dynamic variable.
     computeResultFromDynamic(accessors, template) {
         if (template.ids.length === 0) {
@@ -292,9 +300,9 @@ class compiler {
                         } else if (i === '^') {
                             randomString += String.fromCharCode(Math.floor(Math.random() * 26) + 65);
                         } else if (i === '@') {
-                            randomString += String.fromCharCode(Math.floor(Math.random() * 26) + 65);
+                            randomString += String.fromCharCode(Math.floor(Math.random() * 52) + 65);
                         } else if (i === '*') {
-                            randomString += String.fromCharCode(Math.floor(Math.random() * 26) + 97);
+                            randomString += this.getRandomAny();
                         }
                     }
                     computedIds.push(randomString);
