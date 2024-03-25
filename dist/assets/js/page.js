@@ -41,8 +41,6 @@ function execute() {
             });
         return false;
     }
-    // temporary solution
-    console.log(result);
     out.getDoc().setValue(result.join("\r\n"));
 }
 

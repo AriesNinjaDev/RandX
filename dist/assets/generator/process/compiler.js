@@ -31,7 +31,7 @@ class compiler {
         return string.split(new RegExp(delimiter, "i"));
     }
 
-    tokenize(input) {
+    tokenize(input,line) {
         let counter = 0;
         const identifiers = [];
         const convertedString = input.replace(/\\\[|\\\]|(\[.*?\])/g, (match, group) => {
@@ -44,7 +44,8 @@ class compiler {
 
         return {
             text: convertedString,
-            ids: identifiers
+            ids: identifiers,
+            line: line
         };
     }
 
@@ -279,7 +280,6 @@ class compiler {
 
     // This function is used to compute the result of a dynamic variable. It is recursive and will continue to call itself until all dynamic variables are resolved. It will return the final result of the dynamic variable.
     computeDynamic(accessors, template) {
-        console.log(template);
         if (template.ids.length === 0) {
             return template.text;
         }
@@ -303,9 +303,23 @@ class compiler {
                             randomString += String.fromCharCode(Math.floor(Math.random() * 52) + 65);
                         } else if (i === '*') {
                             randomString += this.getRandomAny();
+                        } else {
+                            return {
+                                error: "Invalid Dynamic Identifier: Dynamic identifiers must be valid variables, special dynamic characters, or random number ranges.",
+                                line: template.line,
+                            }
                         }
                     }
                     computedIds.push(randomString);
+                } else if (identifier.includes('-')) {
+                    const lowerBound = parseInt(identifier.split('-')[0]);
+                    const upperBound = parseInt(identifier.split('-')[1]);
+                    computedIds.push(Math.floor(Math.random() * (upperBound - lowerBound + 1)) + lowerBound);
+                } else {
+                    return {
+                        error: "Invalid Dynamic Identifier: Dynamic identifiers must be valid variables, special dynamic characters, or random number ranges.",
+                        line: template.line,
+                    }
                 }
             }
         }
@@ -317,6 +331,68 @@ class compiler {
 
     unify(str) {
         return str.replace(/\\(.)/g, '$1');
+    }
+
+    parseList(list,line) {
+        // Filter out strings containing percentages and separate them
+        const percentageStrings = [];
+        const normalStrings = [];
+        let iterLine = line;
+        list.forEach((element) => {
+            iterLine++;
+            if (element.trim().endsWith('%')) {
+                if (element.charAt(element.length - 2) === '\\') {
+                    normalStrings.push(element.trim());
+                }
+                    const pKeyword = element.trim().substring(element.trim().lastIndexOf(" ")+1);
+                if (! Number(pKeyword.replace('%',''))) {
+                    return {
+                        error: "Invalid Percentage: Percentages must be numbers.",
+                        line: iterLine,
+                    }
+                } else if (! (Number(pKeyword.replace('%','')) < 100)) {
+                    return {
+                        error: "Invalid Percentage: Percentages must be less than 100.",
+                        line: iterLine,
+                    }
+                } else if (! (Number(pKeyword.replace('%','')) > 0)) {
+                    return {
+                        error: "Invalid Percentage: Percentages must be greater than 0.",
+                        line: iterLine,
+                    }
+                }
+                percentageStrings.push({
+                    value: element.substring(0,element.lastIndexOf(" ")).trim(),
+                    percentage: parseFloat(pKeyword.replace('%', ''))
+                });
+            } else {
+                normalStrings.push(element.trim());
+            }
+        });
+    
+        // Calculate total percentage of normal strings
+        const totalNormalPercentage = normalStrings.length * 100 / list.length;
+        // Adjust the percentage for strings with percentages
+        const adjustedTotalPercentage = totalNormalPercentage + percentageStrings.reduce((acc, curr) => acc + curr.percentage, 0);
+    
+        // Generate a random number between 0 and adjustedTotalPercentage
+        const randomNumber = Math.random() * adjustedTotalPercentage;
+    
+        // Check if the random number falls within the percentage range of percentage strings
+        if (randomNumber < totalNormalPercentage) {
+            // Choose randomly from normal strings
+            return normalStrings[Math.floor(randomNumber / (totalNormalPercentage / normalStrings.length))];
+        } else {
+            // Subtract totalNormalPercentage from randomNumber to adjust for percentage strings
+            let adjustedRandomNumber = randomNumber - totalNormalPercentage;
+            // Choose randomly from percentage strings
+            for (const percentageString of percentageStrings) {
+                if (adjustedRandomNumber < percentageString.percentage) {
+                    return percentageString.value;
+                }
+                adjustedRandomNumber -= percentageString.percentage;
+            }
+        }
     }
 
     compile(data) {
@@ -382,7 +458,7 @@ class compiler {
 
                 for (const tagVar of accessors[step.name].ids) {
                     // Check if the tag variable exists or if it is a special dynamic character.
-                    if (!storage.has(tagVar) && !['#', '&', '^', '@', '*'].some(char => { return tagVar.includes(char) })) {
+                    if (!storage.has(tagVar) && !['#', '&', '^', '@', '*', '-'].some(char => { return tagVar.includes(char) })) {
                         return {
                             error: "Undeclared Variable Error: The variable \"" + tagVar + "\" does not exist.",
                             line: step.line,
@@ -396,8 +472,7 @@ class compiler {
 
                 // Randomly select an element from the list type, and then perform the same operations as the variable type.
 
-                const randomIndex = Math.floor(Math.random() * step.value.length);
-                const randomElement = step.value[randomIndex];
+                const randomElement = this.parseList(step.value,step.line);
 
                 const brOpenCount = (randomElement.split("[").length - 1) - (randomElement.split("\\[").length - 1);
                 const brCloseCount = (randomElement.split("]").length - 1) - (randomElement.split("\\]").length - 1);
@@ -437,7 +512,7 @@ class compiler {
 
                 const escapedLine = randomElement.replace("%", "\\%")
 
-                accessors[step.name] = this.tokenize(escapedLine);
+                accessors[step.name] = this.tokenize(escapedLine,step.line);
 
                 for (const tagVar of accessors[step.name].ids) {
                     // Check if the tag variable exists or if it is a special dynamic character.
@@ -457,63 +532,11 @@ class compiler {
             } else if (step.type === 'list') {
                 storage.set(step.name, step.value);
             } else if (step.type === 'result') {
+                if (result.error) {
+                    return result;
+                }
                 return this.unify(result);
             }
         }
     }
 }
-
-/*
-function chooseRandomWithPercentages(list) {
-    // Filter out strings containing percentages and separate them
-    const percentageStrings = [];
-    const normalStrings = [];
-    list.forEach((element) => {
-        if (element.trim().endsWith('%')) {
-        		const pKeyword = element.trim().substring(0,element.trim().lastIndexOf(" "));
-            if (! Number(pKeyword.replace('%','')) || ! pKeyword.replace('%','') < 100 || pKeyword.replace('%','') > 0) {
-            console.log(pKeyword.replace('%',''));
-            return false;
-            } 
-            percentageStrings.push({
-                value: element.substring(0,element.lastIndexOf(" ")),
-                percentage: parseFloat(pKeyword.replace('%', ''))
-            });
-        } else {
-            normalStrings.push(element);
-        }
-    });
-    
-    console.log(normalStrings);
-    console.log(percentageStrings);
-
-    // Calculate total percentage of normal strings
-    const totalNormalPercentage = normalStrings.length * 100 / list.length;
-    // Adjust the percentage for strings with percentages
-    const adjustedTotalPercentage = totalNormalPercentage + percentageStrings.reduce((acc, curr) => acc + curr.percentage, 0);
-
-    // Generate a random number between 0 and adjustedTotalPercentage
-    const randomNumber = Math.random() * adjustedTotalPercentage;
-
-    // Check if the random number falls within the percentage range of percentage strings
-    if (randomNumber < totalNormalPercentage) {
-        // Choose randomly from normal strings
-        return normalStrings[Math.floor(randomNumber / (totalNormalPercentage / normalStrings.length))];
-    } else {
-        // Subtract totalNormalPercentage from randomNumber to adjust for percentage strings
-        let adjustedRandomNumber = randomNumber - totalNormalPercentage;
-        // Choose randomly from percentage strings
-        for (const percentageString of percentageStrings) {
-            if (adjustedRandomNumber < percentageString.percentage) {
-                return percentageString.value;
-            }
-            adjustedRandomNumber -= percentageString.percentage;
-        }
-    }
-}
-
-// Example usage:
-const stepValues = ["my string 20%", "another string 40%", "normal string 1", "normal string 2"];
-const chosenElement = chooseRandomWithPercentages(stepValues);
-console.log("Chosen Element:", chosenElement);
-*/
