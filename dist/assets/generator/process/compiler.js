@@ -54,6 +54,7 @@ class compiler {
         let seed = Math.floor(
             Date.now() * Math.random() * (Math.random() + Math.random())
         );
+        let exportType = "text";
 
         let existingVars = [];
         let existingLists = [];
@@ -75,6 +76,7 @@ class compiler {
 
         // Look through each line for variable instantiations, list instantiations, and the "result:" tag and add them to instructions.
         for (const line of lines) {
+
             if (line[0] === " " && line.trim() !== '') {
                 return { error: "Invalid Indentation: Line cannot begin with spaces or tabs.", line: index };
             } else if (line[0] === "-") {
@@ -98,8 +100,29 @@ class compiler {
                 }
                 instructions[instructions.length - 1].value.push(line.split("-")[1].trim());
             } else if (line[0] == '_') {
+                if (traversingList) {
+                    traversingList = false;
+                }
+                if (resultEntryExpected) {
+                    return {
+                        error: 'Invalid Declaration: You cannot declare a variable after the result tag.',
+                        line: index,
+                    };
+                }
+                if (line.split(":").length != 2) {
+                    return {
+                        error: "Invalid Declaration: Declarations must have a single colon.",
+                        line: index,
+                    };
+                }
                 switch (line.split(":")[0].trim()) {
                     case "_amount":
+                        if (Number.isNaN(parseInt(line.split(":")[1].trim()))) {
+                            return {
+                                error: "Invalid Amount: The amount must be a number.",
+                                line: index,
+                            };
+                        }
                         amount = parseInt(line.split(":")[1].trim());
                         break;
                     case "_seed":
@@ -111,10 +134,15 @@ class compiler {
                             line: index,
                         };
                     case "_export":
-                        return {
-                            error: "Temporary Error: Export types are not yet supported.",
-                            line: index,
-                        };
+                        let type = line.split(":")[1].trim();
+                        if (type !== "text" && type !== "json" && type !== "list") {
+                            return {
+                                error: "Invalid Export Type: The export type must be either text or json.",
+                                line: index,
+                            };
+                        }
+                        exportType = type;
+                        break;
                     default:
                         return {
                             error: "Invalid Declaration: You cannot define a reserved variable.",
@@ -190,8 +218,7 @@ class compiler {
                 }
                 resultEntryExpected = true;
                 instructions.push({ type: "result", value: "", line: index + 1 });
-            } else if (line.match(/[^\\]:/) && (! (line.indexOf('[') < line.indexOf(':')))) { // If the line contains a colon that is not escaped
-                // If a "[" is present before the colon,proceed to the next if check
+            } else if (/(?<!\\):/g.test(line) && ! line.split(":")[0].includes("[")) {
                 console.log(line)
                 if (traversingList) {
                     traversingList = false;
@@ -249,7 +276,7 @@ class compiler {
                         }
                     }
                     instructions[instructions.length - 1].value = line.trim();
-                    return { instructions, amount };
+                    return { instructions, amount, type:exportType };
                 }
                 return {
                     error: "Stray Text: Text on this line can't be attached to a declaration or statement.",
@@ -326,7 +353,8 @@ class compiler {
                     }
                     computedIds.push(Math.floor(Math.random() * (upperBound - lowerBound + 1)) + lowerBound);
                 } else if (identifier.includes(':')) {
-                    // [PLURAL:myVar] // returns s if myVar is not 1
+                    // [PLURAL:myVar] // correctly pluralizes myVar if it is a word, or is an "s" if it is a number other than 1.
+                    // [UNIT:myVar] // correctly adds a or an to myVar if it is a word. 
                     // [UPPER:myVar] // returns the uppercase of myVar
                     // [LOWER:myVar] // returns the lowercase of myVar
                     // [CAPS:myVar] // returns the capitalized myVar
@@ -343,19 +371,40 @@ class compiler {
                     const reference = this.computeDynamic(accessors, accessors[varName]);
                     let result = '';
                     if (tag === 'PLURAL') {
-                        result = reference !== 1 ? 's' : '';
+                        if (reference.endsWith('s')) {
+                            result = reference + 'es';
+                        } else if (reference.endsWith('y')) {
+                            result = reference.slice(0, -1) + 'ies';
+                        } else if (parseInt(reference) === 1) {
+                            result = "";
+                        } else if (Number(reference)) {
+                            result = "s";
+                        } else {
+                            result = reference + 's';
+                        }
+                    } else if (tag === 'UNIT') {
+                        if ('aeiou'.includes(reference.charAt(0).toLowerCase())) {
+                            result = 'an';
+                        } else {
+                            result = 'a';
+                        }
                     } else if (tag === 'UPPER') {
                         result = reference.toUpperCase();
                     } else if (tag === 'LOWER') {
                         result = reference.toLowerCase();
                     } else if (tag === 'CAPS') {
-                        result = reference.charAt(0).toUpperCase() + reference.slice(1).toLowerCase();
+                        // Needs to support multiple words.
+                        if (reference.includes(' ')) {
+                            result = reference.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                        } else {
+                            result = reference.charAt(0).toUpperCase() + reference.slice(1);
+                        }
                     } else if (tag.match(/^[0-9]+$/)) {
                         result = reference.slice(parseInt(tag));
-                    } else if (tag.match(/^[0-9]+:[0-9]+$/)) {
-                        let start = parseInt(tag.split(':')[0]);
-                        let end = parseInt(tag.split(':')[1]);
-                        result = reference.slice(start, end + 1);
+                        if (identifier.split(':').length === 3) {
+                            console.log(identifier)
+                            result = reference.slice(parseInt(tag), parseInt(identifier.split(':')[2]));
+                        }
                     } else {
                         return {
                             error: "Invalid Dynamic Identifier: Dynamic identifiers must be valid variables, special dynamic characters, or random number ranges.",
@@ -461,7 +510,7 @@ class compiler {
 
         for (const step of instructions) {
 
-            let tagCount;
+            var tagCount;
 
             if (step.type === 'variable' || step.type === 'result') {
                 const brOpenCount = (step.value.split("[").length - 1) - (step.value.split("\\[").length - 1);

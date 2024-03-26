@@ -1,5 +1,3 @@
-
-
 const editor = CodeMirror.fromTextArea(document.getElementById("code"), {
     lineNumbers: true,
     mode: "null",
@@ -23,7 +21,7 @@ function execute() {
     let x = editor.getValue();
     // alert(x);
     const result = generator.execute(x);
-    if (!result) {
+    if (!result.data) {
         out.getDoc().setValue("Compiler finished with no output.");
         document
             .querySelectorAll(".CodeMirror-line")
@@ -32,8 +30,10 @@ function execute() {
             });
         return false;
     }
-    if (result.error) {
-        out.getDoc().setValue(`(LINE ${result.line}) ${result.error}`);
+    if (result.data.error) {
+        out.getDoc().setValue(
+            `(LINE ${result.data.line}) ${result.data.error}`
+        );
         document
             .querySelectorAll(".CodeMirror-line")
             .forEach(function (element) {
@@ -41,7 +41,13 @@ function execute() {
             });
         return false;
     }
-    out.getDoc().setValue(result.join("\r\n"));
+    if (result.type === "text") {
+        out.getDoc().setValue(result.data.join("\r\n"));
+    } else if (result.type === "json") {
+        out.getDoc().setValue(JSON.stringify(result.data, null, 2));
+    } else if (result.type === "list") {
+        out.getDoc().setValue(JSON.stringify(result.data));
+    }
 }
 
 function doClear() {

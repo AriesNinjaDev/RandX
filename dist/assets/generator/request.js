@@ -17,6 +17,6 @@ class rscript {
             }
             m_result.push(m_compiledStep);
         }
-        return m_result;
+        return {data:m_result,type:m_internal.type};
     }
 }

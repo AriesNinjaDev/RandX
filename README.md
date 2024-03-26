@@ -5,7 +5,7 @@
 <br><br>
 <div align="center">
     <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg"></a>
-    <a><img src="https://img.shields.io/badge/Version-v0.0.2_Alpha-blue"></a>
+    <a><img src="https://img.shields.io/badge/Version-0.0.3_Alpha-blue"></a>
     <a href="https://www.npmjs.com/"><img src="https://img.shields.io/npm/v/npm"></a>
     <a ><img src="https://img.shields.io/badge/Code_Coverage-92%25-green"></a>
     <a href="https://randx.aries.ninja/docs"><img src="https://img.shields.io/badge/Documentation-purple"></a>
